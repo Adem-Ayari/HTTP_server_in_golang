@@ -1,13 +1,14 @@
 package main
 
 import (
+	"log"
 	"os"
 	"path"
 )
 
-func fileExistance(fileRequest string) bool {
+func fileExistance(dir string, fileRequest string) bool {
 	filePath := path.Clean(fileRequest)
-	_, err := os.Stat(filePath)
+	_, err := os.Stat(dir + filePath)
 
 	if err != nil {
 		if err == os.ErrNotExist {
@@ -18,21 +19,57 @@ func fileExistance(fileRequest string) bool {
 	return true
 }
 
-func fileHandler(fileRequest string) (int, []byte) {
+func pathExistance(dir string, pathRequest string) bool {
+	filePath := path.Dir(pathRequest)
+	_, err := os.Stat(dir + filePath)
+
+	if err != nil {
+		if err == os.ErrPermission {
+			log.Fatal(err)
+		}
+		return false
+	}
+
+	return true
+}
+
+func fileHandlerGET(dir string, fileRequest string) (int, []byte) {
 	filePath := path.Clean(fileRequest)
-	file, err := os.Open(filePath)
+	file, err := os.Open(dir + filePath)
 
 	if err != nil {
 		os.Exit(1)
 	}
+	defer file.Close()
 
-	buffer := make([]byte, 2048)
+	buffer := make([]byte, 1048576)
 
 	n, err := file.Read(buffer)
 
 	if err != nil {
-		os.Exit(1)
+		log.Fatal(err)
 	}
 
 	return n, buffer[:n]
+}
+
+func fileHandlerPOST(dir string, fileRequest string, data string) bool {
+	filePath := path.Clean(fileRequest)
+	file, err := os.Create(dir + filePath)
+
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+
+	n, err := file.Write([]byte(data))
+
+	if err != nil {
+		return false
+	} else if n != len(data) {
+		os.Remove(dir + filePath)
+		return false
+	}
+
+	return true
 }

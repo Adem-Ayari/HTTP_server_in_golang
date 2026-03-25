@@ -19,12 +19,19 @@ func parser(request string) map[string]string {
 		}
 	}
 
-	headers := requestArray[1 : pos-1]
-	body := requestArray[pos]
+	headers := requestArray[1:pos]
+	var body string
+	if pos+1 < len(requestArray) {
+		body = requestArray[pos+1]
+	}
 
 	for i := range headers {
 		tmp := strings.Split(headers[i], ":")
-		requestParse[tmp[0]] = strings.TrimSpace(tmp[1])
+		if len(tmp) == 2 {
+			requestParse[tmp[0]] = strings.TrimSpace(tmp[1])
+		} else if len(tmp) == 1 {
+			requestParse[tmp[0]] = ""
+		}
 	}
 
 	requestParse["request body"] = body
