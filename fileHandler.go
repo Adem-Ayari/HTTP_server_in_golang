@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"log"
 	"os"
 	"path"
@@ -72,4 +74,23 @@ func fileHandlerPOST(dir string, fileRequest string, data string) bool {
 	}
 
 	return true
+}
+
+func encodedGzip(n int, buffer []byte) (int, []byte) {
+
+	var b bytes.Buffer
+	gz := gzip.NewWriter(&b)
+	_, err := gz.Write(buffer[:n])
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := gz.Flush(); err != nil {
+		log.Fatal(err)
+	}
+	if err := gz.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	return b.Len(), b.Bytes()
 }

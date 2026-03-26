@@ -30,19 +30,27 @@ func main() {
 
 		if err != nil {
 			fmt.Println("Connection acceptance error")
-			os.Exit(1)
+			continue
 		}
 
-		defer conn.Close()
+		go handleConnection(conn)
+	}
+}
+func handleConnection(conn net.Conn) {
+	defer func(conn net.Conn) {
+		fmt.Println("Connection closed", conn.RemoteAddr().String())
+		conn.Close()
+	}(conn)
 
+	for {
 		buffer := make([]byte, 1048576)
 		n, err := conn.Read(buffer)
 
 		if err != nil {
 			if err != io.EOF {
-				fmt.Println("read error")
+				fmt.Println("read error", err)
 			}
-			break
+			return
 		}
 
 		requestParse := parser(string(buffer[:n]))
@@ -53,9 +61,11 @@ func main() {
 
 		response := response(directory, requestParse)
 		conn.Write([]byte(response))
+		if state, ok := requestParse["Connection"]; ok && state == "close" {
+			break
+		}
 	}
 }
-
 func argsParser() {
 	if len(os.Args)%2 == 1 {
 		for i := 1; i < len(os.Args); i = i + 2 {
