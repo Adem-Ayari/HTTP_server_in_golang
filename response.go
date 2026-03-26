@@ -53,7 +53,7 @@ func GET(dir string, request map[string]string) string {
 	case "/user-agent":
 		response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(request["User-Agent"]), request["User-Agent"])
 	default:
-		if fileExistance(dir, requestPath) {
+		if fileExistence(dir, requestPath) {
 			n, body := fileHandlerGET(dir, requestPath)
 			response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s", acceptType(request), n, string(body))
 			if acceptEncoding, ok := request["Accept-Encoding"]; ok {
@@ -79,7 +79,7 @@ func POST(dir string, request map[string]string) string {
 	requestLineArgs := strings.Split(request["request line"], " ")
 	requestPath := path.Clean(string(requestLineArgs[1]))
 
-	if pathExistance(dir, requestPath) {
+	if pathExistence(dir, requestPath) {
 		fileHandlerPOST(dir, requestPath, request["request body"])
 		response = "HTTP/1.1 201 Created\r\n\r\n"
 	}
@@ -97,7 +97,7 @@ func acceptType(request map[string]string) string {
 		return "text/plain"
 	}
 
-	mimeType := fileExistanceType(ext)
+	mimeType := fileExistenceType(ext)
 
 	acceptHeader, ok := request["Accept"]
 	if !ok {

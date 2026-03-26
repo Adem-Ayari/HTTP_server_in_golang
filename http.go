@@ -77,7 +77,7 @@ func argsParser() {
 			case "--directory":
 				directory = path.Dir(os.Args[i+1])
 			case "-d":
-				directory = os.Args[i+1]
+				directory = path.Dir(os.Args[i+1])
 			case "--port":
 				port = os.Args[i+1]
 			case "-p":

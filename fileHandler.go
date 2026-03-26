@@ -3,12 +3,13 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"log"
 	"os"
 	"path"
 )
 
-func fileExistance(dir string, fileRequest string) bool {
+func fileExistence(dir string, fileRequest string) bool {
 	filePath := path.Clean(fileRequest)
 	_, err := os.Stat(dir + filePath)
 
@@ -21,7 +22,7 @@ func fileExistance(dir string, fileRequest string) bool {
 	return true
 }
 
-func fileExistanceType(extension string) string {
+func fileExistenceType(extension string) string {
 	mimeTypes := map[string]string{
 		".html": "text/html",
 		".css":  "text/css",
@@ -42,7 +43,7 @@ func fileExistanceType(extension string) string {
 	return "text/plain"
 }
 
-func pathExistance(dir string, pathRequest string) bool {
+func pathExistence(dir string, pathRequest string) bool {
 	filePath := path.Dir(pathRequest)
 	_, err := os.Stat(dir + filePath)
 
@@ -104,13 +105,13 @@ func encodedGzip(n int, buffer []byte) (int, []byte) {
 	_, err := gz.Write(buffer[:n])
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("error%s", err)
 	}
 	if err := gz.Flush(); err != nil {
-		log.Fatal(err)
+		fmt.Printf("error%s", err)
 	}
 	if err := gz.Close(); err != nil {
-		log.Fatal(err)
+		fmt.Printf("error%s", err)
 	}
 
 	return b.Len(), b.Bytes()
