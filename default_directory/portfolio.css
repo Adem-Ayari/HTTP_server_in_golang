@@ -1,0 +1,141 @@
+body {
+  margin: 0;
+  height: 100vh;
+}
+
+.section {
+  text-align: center;
+  font-size: 3rem;
+  color: white;
+  display: flex;
+  flex-direction: column;
+}
+.rass {
+  margin-top: 0;
+  background-image: url(head.png);
+  background-size: 100vw 10vh;
+  object-fit: contain;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100vw;
+  height: 10vh;
+  margin-bottom: 5%;
+}
+.name {
+  margin-left: 2.5%;
+  margin-top: 0.5%;
+  font-size: 2rem;
+  font-family: Impact, Charcoal, sans-serif;
+  mix-blend-mode: difference;
+}
+.nav {
+  margin-right: 1%;
+  margin-top: 0.5%;
+  width: 40%;
+  font-size: 2rem;
+  font-family: Impact, Charcoal, sans-serif;
+  filter: invert(1);
+}
+.nav button {
+  all: unset;
+  cursor: pointer;
+  margin-left: 1%;
+}
+
+.section:nth-child(1) {
+  background-image: url(pexels-danbuilds-633409.jpg);
+  background-size: 100vw 100vh;
+  object-fit: contain;
+  text-align: center;
+  font-size: 3rem;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+.section:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+  background: rgb(28, 29, 46);
+}
+.section:nth-child(3) {
+  background-color: #1a1a1a;
+}
+.section:nth-child(4) {
+  background-color: #e74c3c;
+}
+#step {
+  margin-top: 15%;
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  text-shadow: 0 0 15px whitesmoke;
+}
+#step:hover {
+  text-shadow: 0 0 5px white;
+  font-weight: 600;
+}
+.smoothie {
+  position: absolute;
+  aspect-ratio: 16/9;
+  height: 47.5%;
+  top: 2.5%;
+  left: 2.5%;
+}
+.pepsi {
+  position: absolute;
+  aspect-ratio: 16/9;
+  height: 47.5%;
+  top: 50%;
+  right: 5%;
+}
+#Home {
+  display: none;
+  width: 1rem;
+  height: 1rem;
+  color: #1a1a1a;
+  background-color: white;
+  position: fixed;
+  left: 2rem;
+  bottom: 2rem;
+}
+.image-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 400px;
+  height: 400px;
+  transform-style: preserve-3d;
+  transform: perspective(1000px) rotateY(0deg);
+  transition: transform 0.7s;
+}
+
+.image-container span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotateY(calc(var(--i) * 180deg)) translateZ(400px);
+  backface-visibility: hidden;
+}
+
+.image-container span img {
+  width: 100%;
+  height: 100%;
+  -o-object-fit: cover;
+  object-fit: cover;
+  filter: grayscale(100%);
+}
+.image-container span img:hover {
+  filter: none;
+}

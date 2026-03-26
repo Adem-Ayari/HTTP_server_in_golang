@@ -12,10 +12,13 @@ import (
 var directory string = "default_directory"
 var port string = "4221"
 
+const BUFFER_SIZE = 1048576
+
 func main() {
 
 	argsParser()
 
+	fmt.Println("Logs will appear here")
 	listener, err := net.Listen("tcp", "0.0.0.0:"+port)
 
 	if err != nil {
@@ -29,9 +32,10 @@ func main() {
 		conn, err := listener.Accept()
 
 		if err != nil {
-			fmt.Println("Connection acceptance error")
+			fmt.Println("Failed to accept Connection")
 			continue
 		}
+		fmt.Println("New Connection established", conn.RemoteAddr().String())
 
 		go handleConnection(conn)
 	}
@@ -43,7 +47,7 @@ func handleConnection(conn net.Conn) {
 	}(conn)
 
 	for {
-		buffer := make([]byte, 1048576)
+		buffer := make([]byte, BUFFER_SIZE)
 		n, err := conn.Read(buffer)
 
 		if err != nil {

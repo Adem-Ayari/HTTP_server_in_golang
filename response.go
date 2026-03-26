@@ -55,13 +55,13 @@ func GET(dir string, request map[string]string) string {
 	default:
 		if fileExistance(dir, requestPath) {
 			n, body := fileHandlerGET(dir, requestPath)
-			response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", n, string(body))
+			response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s", acceptType(request), n, string(body))
 			if acceptEncoding, ok := request["Accept-Encoding"]; ok {
 				encodings := strings.Split(acceptEncoding, ", ")
 				for _, encoding := range encodings {
 					if encoding == "gzip" {
 						n, body = encodedGzip(n, body)
-						response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", n, string(body))
+						response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s", acceptType(request), n, string(body))
 					}
 				}
 			}
@@ -85,4 +85,59 @@ func POST(dir string, request map[string]string) string {
 	}
 
 	return response
+}
+
+func acceptType(request map[string]string) string {
+	requestLineArgs := strings.Split(request["request line"], " ")
+	requestPath := path.Clean(requestLineArgs[1])
+
+	ext := path.Ext(requestPath)
+
+	if ext == "" {
+		return "text/plain"
+	}
+
+	mimeType := fileExistanceType(ext)
+
+	acceptHeader, ok := request["Accept"]
+	if !ok {
+		return mimeType
+	}
+
+	acceptTypes := parseAcceptHeader(acceptHeader)
+
+	for _, accepted := range acceptTypes {
+		if accepted == mimeType || accepted == "*/*" {
+			return mimeType
+		}
+		if strings.HasSuffix(accepted, "/*") {
+			prefix := strings.TrimSuffix(accepted, "/*")
+			if strings.HasPrefix(mimeType, prefix+"/") {
+				return mimeType
+			}
+		}
+	}
+
+	return "text/plain"
+}
+
+func parseAcceptHeader(acceptHeader string) []string {
+
+	acceptHeader = strings.ReplaceAll(acceptHeader, " ", "")
+
+	var result []string
+
+	parts := strings.Split(acceptHeader, ",")
+
+	for _, part := range parts {
+		typeAndQ := strings.Split(part, ";")
+		mimeType := typeAndQ[0]
+
+		if mimeType != "" {
+			result = append(result, mimeType)
+		}
+	}
+
+	return result
+
 }

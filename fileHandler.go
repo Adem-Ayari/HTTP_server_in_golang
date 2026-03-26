@@ -21,6 +21,27 @@ func fileExistance(dir string, fileRequest string) bool {
 	return true
 }
 
+func fileExistanceType(extension string) string {
+	mimeTypes := map[string]string{
+		".html": "text/html",
+		".css":  "text/css",
+		".js":   "application/javascript",
+		".json": "application/json",
+		".txt":  "text/plain",
+		".xml":  "application/xml",
+		".jpg":  "image/jpeg",
+		".jpeg": "image/jpeg",
+		".png":  "image/png",
+		".gif":  "image/gif",
+		".pdf":  "application/pdf",
+	}
+
+	if mime, ok := mimeTypes[extension]; ok {
+		return mime
+	}
+	return "text/plain"
+}
+
 func pathExistance(dir string, pathRequest string) bool {
 	filePath := path.Dir(pathRequest)
 	_, err := os.Stat(dir + filePath)
