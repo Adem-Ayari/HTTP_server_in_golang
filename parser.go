@@ -26,11 +26,18 @@ func parser(request string) map[string]string {
 	}
 
 	for i := range headers {
-		tmp := strings.Split(headers[i], ":")
-		if len(tmp) == 2 {
-			requestParse[tmp[0]] = strings.TrimSpace(tmp[1])
-		} else if len(tmp) == 1 {
-			requestParse[tmp[0]] = ""
+		tmpIndex := strings.Index(headers[i], ":")
+
+		if tmpIndex == -1 {
+			continue
+		}
+
+		name := strings.TrimSpace(headers[i][0:tmpIndex])
+		if tmpIndex < len(headers[i])-1 {
+			value := strings.TrimSpace(headers[i][tmpIndex+1:])
+			requestParse[name] = value
+		} else {
+			requestParse[name] = ""
 		}
 	}
 
