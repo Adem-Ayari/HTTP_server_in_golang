@@ -1,22 +1,31 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	"path"
+	"syscall"
+	"time"
 )
 
-var directory string = "default_directory"
+var directory string = "./"
 var port string = "4221"
+
+const workers = 100
 
 const BUFFER_SIZE = 1048576
 
 func main() {
 
 	argsParser()
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	fmt.Println("Logs will appear here")
 	listener, err := net.Listen("tcp", "0.0.0.0:"+port)
@@ -28,18 +37,54 @@ func main() {
 
 	defer listener.Close()
 
-	for {
-		conn, err := listener.Accept()
+	connections := make(chan net.Conn, 1000)
+	for i := 0; i < workers; i++ {
+		go deployWorker(context.Background(), connections)
+	}
 
-		if err != nil {
-			fmt.Println("Failed to accept Connection")
-			continue
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					fmt.Println("Failed to accept Connection")
+					continue
+				}
+			}
+			fmt.Println("New Connection established", conn.RemoteAddr().String())
+			select {
+			case connections <- conn:
+			case <-ctx.Done():
+				conn.Close()
+				return
+			}
 		}
-		fmt.Println("New Connection established", conn.RemoteAddr().String())
+	}()
+	<-ctx.Done()
+	fmt.Println()
+	fmt.Println(context.Cause(ctx))
+	close(connections)
+	time.Sleep(time.Second)
+	fmt.Println("shutting down complete")
+}
 
-		go handleConnection(conn)
+func deployWorker(ctx context.Context, connections chan net.Conn) {
+	for {
+		select {
+		case conn, err := <-connections:
+			if !err {
+				return
+			}
+			handleConnection(conn)
+		case <-ctx.Done():
+			return
+		}
 	}
 }
+
 func handleConnection(conn net.Conn) {
 	defer func(conn net.Conn) {
 		fmt.Println("Connection closed", conn.RemoteAddr().String())
@@ -47,14 +92,39 @@ func handleConnection(conn net.Conn) {
 	}(conn)
 
 	for {
+		readCtx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+
+		type readResult struct {
+			n   int
+			err error
+		}
+
 		buffer := make([]byte, BUFFER_SIZE)
-		n, err := conn.Read(buffer)
+
+		readChannel := make(chan readResult, 1)
+		go func(conn net.Conn) {
+			n, err := conn.Read(buffer)
+			readChannel <- readResult{n, err}
+		}(conn)
+
+		var n int
+		var err error
+
+		select {
+		case readResult := <-readChannel:
+			n, err = readResult.n, readResult.err
+			cancel()
+		case <-readCtx.Done():
+			cancel()
+			fmt.Println("read timepout")
+			return
+		}
 
 		if err != nil {
 			if err != io.EOF {
 				fmt.Println("read error", err)
 			}
-			return
+			break
 		}
 
 		requestParse := parser(string(buffer[:n]))
