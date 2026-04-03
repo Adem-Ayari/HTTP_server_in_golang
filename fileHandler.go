@@ -35,6 +35,7 @@ func fileExistenceType(extension string) string {
 		".png":  "image/png",
 		".gif":  "image/gif",
 		".pdf":  "application/pdf",
+		".mp4":  "video/*",
 	}
 
 	if mime, ok := mimeTypes[extension]; ok {

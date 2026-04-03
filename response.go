@@ -49,19 +49,35 @@ func GET(dir string, request map[string]string) string {
 
 	switch requestPath {
 	case "/":
-		response = "HTTP/1.1 200 OK\r\n\r\n"
-	case "/user-agent":
-		response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(request["User-Agent"]), request["User-Agent"])
-	default:
-		if fileExistence(dir, requestPath) {
-			n, body := fileHandlerGET(dir, requestPath)
-			response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s", acceptType(request), n, string(body))
+		if fileExistence(dir, File) {
+			n, body := fileHandlerGET(dir, File)
+			response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s", acceptType(request, File), n, string(body))
 			if acceptEncoding, ok := request["Accept-Encoding"]; ok {
 				encodings := strings.Split(acceptEncoding, ", ")
 				for _, encoding := range encodings {
 					if encoding == "gzip" {
 						n, body = encodedGzip(n, body)
-						response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s", acceptType(request), n, string(body))
+						response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s", acceptType(request, File), n, string(body))
+					}
+				}
+			}
+		} else {
+			fmt.Println("hello")
+			response = "HTTP/1.1 404 Not Found\r\n\r\n"
+		}
+	case "/user-agent":
+		response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: %d\r\n\r\n%s", len(request["User-Agent"]), request["User-Agent"])
+	default:
+		fmt.Println(requestPath)
+		if fileExistence(dir, requestPath) {
+			n, body := fileHandlerGET(dir, requestPath)
+			response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s", acceptType(request, requestPath), n, string(body))
+			if acceptEncoding, ok := request["Accept-Encoding"]; ok {
+				encodings := strings.Split(acceptEncoding, ", ")
+				for _, encoding := range encodings {
+					if encoding == "gzip" {
+						n, body = encodedGzip(n, body)
+						response = fmt.Sprintf("HTTP/1.1 200 OK\r\nContent-Encoding: gzip\r\nContent-Type: %s\r\nContent-Length: %d\r\n\r\n%s", acceptType(request, requestPath), n, string(body))
 					}
 				}
 			}
@@ -74,10 +90,9 @@ func GET(dir string, request map[string]string) string {
 }
 
 func POST(dir string, request map[string]string) string {
-
 	var response string
 	requestLineArgs := strings.Split(request["request line"], " ")
-	requestPath := path.Clean(string(requestLineArgs[1]))
+	requestPath := path.Clean(requestLineArgs[1])
 
 	if pathExistence(dir, requestPath) {
 		fileHandlerPOST(dir, requestPath, request["request body"])
@@ -87,11 +102,8 @@ func POST(dir string, request map[string]string) string {
 	return response
 }
 
-func acceptType(request map[string]string) string {
-	requestLineArgs := strings.Split(request["request line"], " ")
-	requestPath := path.Clean(requestLineArgs[1])
-
-	ext := path.Ext(requestPath)
+func acceptType(request map[string]string, requestFile string) string {
+	ext := path.Ext(requestFile)
 
 	if ext == "" {
 		return "text/plain"
@@ -110,8 +122,7 @@ func acceptType(request map[string]string) string {
 		if accepted == mimeType || accepted == "*/*" {
 			return mimeType
 		}
-		if strings.HasSuffix(accepted, "/*") {
-			prefix := strings.TrimSuffix(accepted, "/*")
+		if prefix, found := strings.CutSuffix(accepted, "/*"); found {
 			if strings.HasPrefix(mimeType, prefix+"/") {
 				return mimeType
 			}

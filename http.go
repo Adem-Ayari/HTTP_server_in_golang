@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -14,10 +13,10 @@ import (
 )
 
 var directory string = "./"
+var File string = "/index.html"
 var port string = "4221"
 
 const workers = 100
-
 const BUFFER_SIZE = 1048576
 
 func main() {
@@ -116,7 +115,9 @@ func handleConnection(conn net.Conn) {
 			cancel()
 		case <-readCtx.Done():
 			cancel()
+			close(readChannel)
 			fmt.Println("read timepout")
+			conn.Close()
 			return
 		}
 
@@ -128,10 +129,6 @@ func handleConnection(conn net.Conn) {
 		}
 
 		requestParse := parser(string(buffer[:n]))
-
-		for key, value := range requestParse {
-			fmt.Println(key, value)
-		}
 
 		response := response(directory, requestParse)
 		conn.Write([]byte(response))
@@ -152,8 +149,12 @@ func argsParser() {
 				port = os.Args[i+1]
 			case "-p":
 				port = os.Args[i+1]
+			case "--file":
+				File = "/" + os.Args[i+1]
+			case "-f":
+				File = "/" + os.Args[i+1]
 			default:
-				log.Fatal(os.ErrInvalid)
+				fmt.Println(os.ErrInvalid)
 			}
 		}
 	}
